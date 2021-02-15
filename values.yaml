@@ -1,12 +1,12 @@
 image:
   registry: docker.io
-  repository: mediawiki #vistasunil/mediawiki
+  repository: mediawiki-install #heena29k/mediawiki-install
   tag: latest #v8
   pullPolicy: IfNotPresent
 
 mediawikiUser: user
 mediawikiDB: mediadb
-mediawikiDBUser: sunil
+mediawikiDBUser: heena
 mediawikiDBPass: pass123
 
 mediawikiEmail: user@example.com
