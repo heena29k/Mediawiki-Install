@@ -1,0 +1,69 @@
+---
+apiVersion: {{ template "mediawiki.deployment.apiVersion" . }}
+kind: Deployment
+metadata:
+  name: {{ template "mediawiki.fullname" . }}-mediawiki-db
+spec:
+  selector:
+    matchLabels:
+      app: mediawiki-db
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        chart: {{ template "mediawiki.fullname" . }}
+        app: mediawiki-db
+    spec:
+      containers:
+        - name: mediawiki-db-container
+          image: mariadb
+          env:
+            - name: MYSQL_DATABASE
+              value: {{ .Values.mediawikiDB | quote }}
+            - name: MYSQL_USER
+              value: {{ .Values.mediawikiDBUser | quote }}
+            - name: MYSQL_PASSWORD
+              value: {{ .Values.mediawikiDBPass | quote }}
+            - name: MYSQL_RANDOM_ROOT_PASSWORD
+              value: 'yes'
+
+---
+apiVersion: {{ template "mediawiki.deployment.apiVersion" . }}
+kind: Deployment
+metadata:
+  name: {{ template "mediawiki.fullname" . }}-mediawiki-app
+  labels:
+    app: {{ template "mediawiki.name" . }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "mediawiki.name" . }}
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: {{ template "mediawiki.name" . }}
+    spec:
+      containers:
+        - name: {{ template "mediawiki.fullname" . }}
+          image: {{ template "mediawiki.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          volumeMounts:
+            - mountPath: /var/www/html/images
+              name: mediawiki-volume
+              #           - mountPath: /phpfile/LocalSettings.php
+                  #  name: phpmount
+              #- mountPath: /var/www/html/LocalSettings.php
+              #name: mediawiki-localsettings
+              #       subPath: LocalSettings.php
+              #command: ["/bin/cp /phpfile/LocalSettings.php /var/www/html/LocalSettings.php"]
+          ports:
+            - containerPort: 80
+      volumes:
+        - name: mediawiki-volume
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ if .Values.persistence.existingClaim }}{{ .Values.persistence.existingClaim }}{{- else }}{{ template "mediawiki.fullname" . }}-mediawiki{{- end }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
